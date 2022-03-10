@@ -7,13 +7,11 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#define MAX_FILE_SIZE 30000000
-#define MSB_MASK 0xFFFF0000
-#define LSB_MASK 0xFFFF
 unsigned int crc32b(char *message, long message_len) {
   int i, j;
     unsigned int byte, crc, mask;
@@ -73,7 +71,6 @@ int main(int argc, char **argv) {
   const int PACKET_LEN = 2;
   const int CRC_LEN = 4;
   int total_size = DATA_LEN + FILE_LEN + PACKET_LEN + CRC_LEN;
-  total_size = 25078; // only for test
 
   short RECEIVE_SIZE = 3;
   char *send_buffer;
@@ -87,6 +84,7 @@ int main(int argc, char **argv) {
 
   /* handle file */
   FILE *fptr;
+  unsigned long file_len_total;
   char file_path[sizeof(file_info_input)];
   char file_path_padding[FILE_LEN];
   char *file_data;
@@ -150,14 +148,17 @@ int main(int argc, char **argv) {
   strncpy(file_path_padding, file_path, FILE_LEN);
   send_buffer = malloc(total_size);
   receive_buffer = malloc(RECEIVE_SIZE);
-  
 
   /* operate send file */
-  fptr = fopen(file_path, "r");
+  fptr = fopen(file_path, "rb");
   if (!fptr) {
     printf("open file error");
     abort();
   }
+  // fseek(fptr, 0L, SEEK_END);
+  // file_len_total = ftell(fptr);
+  // fseek(fptr, 0L, SEEK_SET);
+  // printf("file length is %lu\n", file_len_total);
 
   file_data = (char *)malloc(total_size * sizeof(char));
   while ((bytes_read = fread(file_data, 1, DATA_LEN, fptr)) > 0) {
